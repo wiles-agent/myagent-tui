@@ -4,10 +4,10 @@ myagent 的终端界面，用 **OpenTUI + SolidJS** 写的。
 
 **它不跑 agent 逻辑。** 模型调用、工具执行、上下文管理全在 Java 后端里；
 这个进程只负责画屏幕和收键盘，两边靠 WebSocket 通信
-（协议见后端仓库的 [docs/protocol.md](https://github.com/wiles-agent/myagent-server/blob/main/docs/protocol.md)）。
+（协议见后端仓库的 [docs/protocol.md](https://github.com/wiles-agent/myagent-Harness/blob/main/docs/protocol.md)）。
 
 myagent 按端分仓库，都在 [wiles-agent](https://github.com/wiles-agent) 组织下：
-[myagent-server](https://github.com/wiles-agent/myagent-server)（Java 后端）、
+[myagent-Harness](https://github.com/wiles-agent/myagent-Harness)（Java 后端）、
 本仓库（终端界面）、[myagent-android](https://github.com/wiles-agent/myagent-android)（手机端）。
 
 ## 跑起来
@@ -25,7 +25,7 @@ git clone https://github.com/wiles-agent/myagent-tui && ./myagent-tui/myagent-tu
 | 想要 | 怎么做 |
 |---|---|
 | 用自己的 jar | `MYAGENT_JAR=/path/to/myagent.jar ./myagent-tui` |
-| 边改后端边用（开发） | `MYAGENT_SERVER_DIR=~/src/myagent-server ./myagent-tui`，后端有改动就地 `mvn package` |
+| 边改后端边用（开发） | `MYAGENT_SERVER_DIR=~/src/myagent-Harness ./myagent-tui`，后端有改动就地 `mvn package` |
 | 下 GitHub 慢 | `MYAGENT_SERVER_RELEASES=<镜像前缀>`，地址形如 `<前缀>/v1.1.0/myagent.jar` |
 
 升级后端 = 改 `SERVER_VERSION` 并确认协议版本对得上，不追 latest：后端发了不兼容的版本时，

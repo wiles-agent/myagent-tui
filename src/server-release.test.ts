@@ -55,7 +55,7 @@ describe("发布版下载", () => {
 
   test("地址钉在配套版本上，可以换镜像；缓存按版本分文件", () => {
     expect(releaseUrl("1.2.3", {})).toBe(
-      "https://github.com/wiles-agent/myagent-server/releases/download/v1.2.3/myagent.jar",
+      "https://github.com/wiles-agent/myagent-Harness/releases/download/v1.2.3/myagent.jar",
     )
     expect(releaseUrl("1.2.3", { MYAGENT_SERVER_RELEASES: "https://mirror.example/dl/" })).toBe(
       "https://mirror.example/dl/v1.2.3/myagent.jar",

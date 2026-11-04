@@ -1,5 +1,5 @@
 /**
- * 生成 README 的封面图（放在后端仓库 myagent-Harness 的 `docs/cover.svg`）。
+ * 生成 README 的封面图（放在后端仓库 myagent-harness 的 `docs/cover.svg`）。
  *
  * 画的就是首屏那两样东西：`Welcome` 字标 + MYAGENT 招牌。
  * 数据直接从界面代码里取（`buildPixels` / `LOGO_LINES` / `theme`），
@@ -13,7 +13,7 @@
  *
  * 跑: bun run cover [输出路径]
  *   不给路径就写到本仓库的 cover.svg；拆仓库之后图挂在后端仓库，
- *   一般这样跑：bun run cover ../myagent-Harness/docs/cover.svg
+ *   一般这样跑：bun run cover ../myagent-harness/docs/cover.svg
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"

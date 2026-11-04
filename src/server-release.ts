@@ -1,7 +1,7 @@
 /**
  * 后端 jar 从哪儿来。
  *
- * 界面和后端拆成两个仓库之后（wiles-agent/myagent-tui 和 wiles-agent/myagent-Harness），
+ * 界面和后端拆成两个仓库之后（wiles-agent/myagent-tui 和 wiles-agent/myagent-harness），
  * 界面手上不再有后端源码，没法像以前那样就地 `mvn package`。
  * 照 linyu 那样各端各一个仓库的路子，后端每次打 tag 由 GitHub Actions 发一个 jar 到 Releases，
  * 界面**钉死一个版本**、第一次运行时下载到 `~/.myagent/server/`，之后直接用缓存。
@@ -26,7 +26,7 @@ export const SERVER_VERSION = '1.1.0'
 /** 发布地址。`MYAGENT_SERVER_RELEASES` 可以换成镜像（国内下 GitHub 慢的时候）。 */
 export function releaseUrl(version: string = SERVER_VERSION, env = process.env): string {
   const base = env['MYAGENT_SERVER_RELEASES']?.replace(/\/+$/, '')
-    ?? 'https://github.com/wiles-agent/myagent-Harness/releases/download'
+    ?? 'https://github.com/wiles-agent/myagent-harness/releases/download'
   return `${base}/v${version}/myagent.jar`
 }
 

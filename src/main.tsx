@@ -59,7 +59,13 @@ if (argv.includes("-h") || argv.includes("--help")) {
   -d, --dir <路径>    工作区，默认当前目录
   -m, --model <名字>  覆盖模型
       --readonly      只读模式，不允许改文件
-      --rebuild       后端不管新鲜不新鲜都重 build 一遍
+      --rebuild       后端不管新鲜不新鲜都重 build 一遍（只对 MYAGENT_SERVER_DIR 有效）
+
+后端从哪儿来（优先级从高到低）:
+  MYAGENT_JAR=<jar>          用这个 jar
+  MYAGENT_SERVER_DIR=<目录>  后端仓库的本地检出，没 build 或有改动就地 build（开发用）
+  都不给                     下载配套版本的发布版，缓存在 ~/.myagent/server/
+  MYAGENT_SERVER_RELEASES    发布版的下载地址前缀，下 GitHub 慢时换镜像
       --lan           局域网模式：手机可以扫码连进来（界面里敲 /qr 出码）。
                       明文 ws，只在可信网络用
       --relay <地址>  挂到中继上，手机在任何网络都能连（端到端加密）

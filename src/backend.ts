@@ -20,9 +20,9 @@
 import { spawn, type ChildProcessByStdio } from 'node:child_process'
 import type { Readable, Writable } from 'node:stream'
 import { existsSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join, resolve } from 'node:path'
 import { buildBackend, jarIsStale } from './build.ts'
+import { ensureReleaseJar } from './server-release.ts'
 import { backoffMs, CrashCounter, SeqTracker } from './link.ts'
 import {
   PROTOCOL_VERSION,
@@ -40,7 +40,7 @@ export type BackendOptions = {
   model?: string
   planMode: boolean
   jar?: string
-  /** 不管新鲜不新鲜都重 build 一遍（--rebuild）。只对仓库自带的 jar 有意义。 */
+  /** 不管新鲜不新鲜都重 build 一遍（--rebuild）。只对 MYAGENT_SERVER_DIR 的本地检出有意义。 */
   forceRebuild?: boolean
   /** 局域网模式：后端绑 0.0.0.0，手机扫码可连（协议 1.1 节）。 */
   lan?: boolean
@@ -92,35 +92,44 @@ export type Backend = {
 }
 
 /** tui/src/ → tui/ → 仓库根。 */
-function repoRoot(): string {
-  return dirname(dirname(fileURLToPath(new URL('.', import.meta.url))))
-}
-
 /**
- * 该用哪个 jar，以及它归不归我们管。
+ * 该用哪个 jar，以及它从哪儿来。三种来源，责任完全不同（详见 server-release.ts）：
  *
- * <p>两种来源，责任完全不同：显式指定（参数或 MYAGENT_JAR）的是用户
- * **钉死的某个 build**——它不存在就报错，绝不替人家重编译；
- * 仓库自带的 target/myagent.jar 归我们管——没有或者过期就现场 build。
+ * - `pinned`：显式指定（参数或 MYAGENT_JAR）——用户钉死的某个 build，它不存在就报错，
+ *   绝不替人家重编译
+ * - `source`：MYAGENT_SERVER_DIR 指着后端仓库的本地检出——开发时用，jar 没有或者旧了就地 build
+ * - `release`：都没给——下载界面钉住的那个发布版，缓存在 ~/.myagent/server/
  */
-export function resolveJar(explicit?: string): { path: string; managed: boolean } {
-  const pinned = explicit ?? process.env['MYAGENT_JAR']
+export type JarSource =
+  | { kind: 'pinned'; path: string }
+  | { kind: 'source'; path: string; serverDir: string }
+  | { kind: 'release' }
+
+export function resolveJar(explicit?: string, env = process.env): JarSource {
+  const pinned = explicit ?? env['MYAGENT_JAR']
   if (pinned && pinned.length > 0) {
     const path = resolve(pinned)
     if (!existsSync(path)) {
       throw new Error(`指定的后端 jar 不存在: ${path}\n检查 MYAGENT_JAR 或 jar 参数。`)
     }
-    return { path, managed: false }
+    return { kind: 'pinned', path }
   }
-  return { path: join(repoRoot(), 'target', 'myagent.jar'), managed: true }
+  const dir = env['MYAGENT_SERVER_DIR']
+  if (dir && dir.length > 0) {
+    const serverDir = resolve(dir)
+    if (!existsSync(join(serverDir, 'pom.xml'))) {
+      throw new Error(`MYAGENT_SERVER_DIR 不是后端仓库（里面没有 pom.xml）: ${serverDir}`)
+    }
+    return { kind: 'source', path: join(serverDir, 'target', 'myagent.jar'), serverDir }
+  }
+  return { kind: 'release' }
 }
 
 /**
- * 保证 jar 可用：仓库自管的 jar 缺了或旧了就地 build。
+ * 保证 jar 可用：本地检出的缺了或旧了就地 build，发布版没缓存就下载。
  *
- * <p>这一步以前在 myagent-tui 脚本里、界面起来**之前**同步做，
- * 用户对着一行裸文本等 mvn。现在它发生在界面之后：进度经 `onStatus`
- * 打到状态栏，输入框也活着——搬家的全部理由见 build.ts 开头。
+ * <p>这一步发生在界面起来之后：进度经 `onStatus` 打到状态栏，输入框也活着——
+ * 搬家的全部理由见 build.ts 开头。
  */
 async function ensureJar(
   options: BackendOptions,
@@ -128,11 +137,18 @@ async function ensureJar(
   onStatus?: (text: string) => void,
 ): Promise<string> {
   const jar = resolveJar(options.jar)
-  if (jar.managed && (options.forceRebuild || jarIsStale(jar.path, repoRoot()))) {
-    onStatus?.(existsSync(jar.path) ? '后端有改动，正在 build…' : '第一次运行，正在 build 后端…')
-    await buildBackend(repoRoot(), signal)
+  switch (jar.kind) {
+    case 'pinned':
+      return jar.path
+    case 'source':
+      if (options.forceRebuild || jarIsStale(jar.path, jar.serverDir)) {
+        onStatus?.(existsSync(jar.path) ? '后端有改动，正在 build…' : '第一次运行，正在 build 后端…')
+        await buildBackend(jar.serverDir, signal)
+      }
+      return jar.path
+    case 'release':
+      return ensureReleaseJar(onStatus, signal)
   }
-  return jar.path
 }
 
 /**

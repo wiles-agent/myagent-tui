@@ -3,25 +3,40 @@
 myagent 的终端界面，用 **OpenTUI + SolidJS** 写的。
 
 **它不跑 agent 逻辑。** 模型调用、工具执行、上下文管理全在 Java 后端里；
-这个进程只负责画屏幕和收键盘，两边靠 WebSocket 通信（协议见 `docs/protocol.md`）。
+这个进程只负责画屏幕和收键盘，两边靠 WebSocket 通信
+（协议见后端仓库的 [docs/protocol.md](https://github.com/wiles-agent/myagent-server/blob/main/docs/protocol.md)）。
+
+myagent 按端分仓库，都在 [wiles-agent](https://github.com/wiles-agent) 组织下：
+[myagent-server](https://github.com/wiles-agent/myagent-server)（Java 后端）、
+本仓库（终端界面）、[myagent-android](https://github.com/wiles-agent/myagent-android)（手机端）。
 
 ## 跑起来
 
 在你想让 agent 干活的目录里敲：
 
 ```bash
-~/Workspace/projects/myagent/myagent-tui
+git clone https://github.com/wiles-agent/myagent-tui && ./myagent-tui/myagent-tui
 ```
 
-仓库根目录的这个脚本会自己判断要不要 build 后端、要不要装依赖，然后起界面。
-第一次跑会花点时间 build，之后两步都跳过，启动和裸跑界面一样快。
+要 JDK 17+ 和 [Bun](https://bun.sh)。仓库根目录的这个脚本会按需装依赖、然后起界面；
+后端 jar 由界面准备：第一次运行时下载配套版本（`src/server-release.ts` 里的 `SERVER_VERSION`）
+到 `~/.myagent/server/`，之后直接用缓存。
+
+| 想要 | 怎么做 |
+|---|---|
+| 用自己的 jar | `MYAGENT_JAR=/path/to/myagent.jar ./myagent-tui` |
+| 边改后端边用（开发） | `MYAGENT_SERVER_DIR=~/src/myagent-server ./myagent-tui`，后端有改动就地 `mvn package` |
+| 下 GitHub 慢 | `MYAGENT_SERVER_RELEASES=<镜像前缀>`，地址形如 `<前缀>/v1.0.0/myagent.jar` |
+
+升级后端 = 改 `SERVER_VERSION` 并确认协议版本对得上，不追 latest：后端发了不兼容的版本时，
+追 latest 的界面会在用户毫不知情时连不上。
 
 ```bash
 ./myagent-tui                 # 在当前目录起界面
 ./myagent-tui -d ~/proj       # 指定工作区
 ./myagent-tui -m 模型名        # 换模型
 ./myagent-tui --readonly      # 只读，不让它改文件
-./myagent-tui --rebuild       # 强制重新 build 后端
+./myagent-tui --rebuild       # 强制重新 build 后端（只对 MYAGENT_SERVER_DIR 有效）
 ./myagent-tui --connect ws://host:port/?token=…   # 不起本地后端，连一个已在跑的（云上）
 ./myagent-tui --help          # 用法（不触发 build）
 ```
@@ -53,7 +68,7 @@ cd tui && bun run dev
 Solid 的 JSX 靠 `bunfig.toml` 里的 `preload = ["@opentui/solid/preload"]` 转换，
 而 **bun 是按 cwd 找 `bunfig.toml` 的**，不是按脚本位置。
 
-所以在仓库根目录跑 `bun tui/src/main.tsx`，那份 bunfig 根本不会加载，
+所以在别的目录跑 `bun <本仓库>/src/main.tsx`，那份 bunfig 根本不会加载，
 JSX 不转换，界面起来一片空白然后立刻退出，**而且没有任何报错**。
 `myagent-tui` 脚本为此先存下 cwd、`cd` 进本目录、再用 `-d` 把工作区传回去。
 

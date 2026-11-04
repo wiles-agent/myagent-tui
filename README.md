@@ -26,7 +26,7 @@ git clone https://github.com/wiles-agent/myagent-tui && ./myagent-tui/myagent-tu
 |---|---|
 | 用自己的 jar | `MYAGENT_JAR=/path/to/myagent.jar ./myagent-tui` |
 | 边改后端边用（开发） | `MYAGENT_SERVER_DIR=~/src/myagent-server ./myagent-tui`，后端有改动就地 `mvn package` |
-| 下 GitHub 慢 | `MYAGENT_SERVER_RELEASES=<镜像前缀>`，地址形如 `<前缀>/v1.0.0/myagent.jar` |
+| 下 GitHub 慢 | `MYAGENT_SERVER_RELEASES=<镜像前缀>`，地址形如 `<前缀>/v1.1.0/myagent.jar` |
 
 升级后端 = 改 `SERVER_VERSION` 并确认协议版本对得上，不追 latest：后端发了不兼容的版本时，
 追 latest 的界面会在用户毫不知情时连不上。

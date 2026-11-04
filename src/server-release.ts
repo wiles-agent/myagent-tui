@@ -21,7 +21,7 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 
 /** 界面配套的后端版本。改它就是升级后端，记得同时确认协议版本对得上。 */
-export const SERVER_VERSION = '1.0.0'
+export const SERVER_VERSION = '1.1.0'
 
 /** 发布地址。`MYAGENT_SERVER_RELEASES` 可以换成镜像（国内下 GitHub 慢的时候）。 */
 export function releaseUrl(version: string = SERVER_VERSION, env = process.env): string {

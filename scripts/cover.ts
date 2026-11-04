@@ -1,5 +1,5 @@
 /**
- * 生成 README 的封面图 `docs/cover.svg`。
+ * 生成 README 的封面图（放在后端仓库 myagent-server 的 `docs/cover.svg`）。
  *
  * 画的就是首屏那两样东西：`Welcome` 字标 + MYAGENT 招牌。
  * 数据直接从界面代码里取（`buildPixels` / `LOGO_LINES` / `theme`），
@@ -11,7 +11,9 @@
  * 交给看图人装了什么字体——GitHub 上十有八九会错位。
  * 换成矩形和线段，出来的图到哪都一模一样。
  *
- * 跑: bun run cover（从 tui/ 目录）
+ * 跑: bun run cover [输出路径]
+ *   不给路径就写到本仓库的 cover.svg；拆仓库之后图挂在后端仓库，
+ *   一般这样跑：bun run cover ../myagent-server/docs/cover.svg
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"
@@ -31,7 +33,7 @@ const PADDING = 44
 /** 字标和招牌之间空几行。 */
 const GAP_ROWS = 2
 
-const OUT = resolve(import.meta.dir, "../../docs/cover.svg")
+const OUT = resolve(process.argv[2] ?? resolve(import.meta.dir, "../cover.svg"))
 
 // --- 画字符 -----------------------------------------------------------------
 

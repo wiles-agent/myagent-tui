@@ -1266,6 +1266,15 @@ describe('auto 审查拦下的操作（照 Claude Code：拦了要看得见，�
     expect(denials[0].reason).toBe('要把 .env 里的 token 发到外部地址，用户没有要求')
   })
 
+  test('理由只留审查说的那句——后面那段「换一种更安全的做法…」是写给模型的，不是给人的', () => {
+    const store = new SessionStore()
+    feed(store,
+      { t: 'tool_started', id: 1, tool: 'bash', arguments: '{}' },
+      { t: 'tool_finished', id: 1, tool: 'bash', ok: false,
+        output: '用户拒绝执行这条命令（x）。自动审查拦下了这个动作：从不可信的源装包，用户没授权。换一种更安全、在用户要求范围内的做法；不要换个写法绕过。确实需要的话，在最后的答复里说明，交给用户决定。' })
+    expect(store.getSnapshot().denials[0].reason).toBe('从不可信的源装包，用户没授权')
+  })
+
   test('只留最近 20 条，新的在前', () => {
     const store = new SessionStore()
     for (let i = 0; i < 25; i++) {

@@ -52,8 +52,14 @@ export function autoDenialReason(ok: boolean, output: string | undefined): strin
   if (ok || !output) return null
   const at = output.indexOf(AUTO_DENIAL_PREFIX)
   if (at < 0) return null
-  return output.slice(at + AUTO_DENIAL_PREFIX.length).split('\n')[0].trim()
+  const line = output.slice(at + AUTO_DENIAL_PREFIX.length).split('\n')[0]
+  // 后端在理由后面接了一段写给模型的指令（AutoClassifier.deny），给人看的只要审查说的那句
+  const advice = line.indexOf(AUTO_DENIAL_ADVICE)
+  return (advice >= 0 ? line.slice(0, advice) : line).trim().replace(/[。.]$/, '')
 }
+
+const AUTO_DENIAL_ADVICE = '。换一种更安全'
+
 
 export type Entry =
   /** `display` 在时画它（大段粘贴折成占位符，见 paste-fold.ts），`text` 是真正发出去的全文 */

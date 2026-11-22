@@ -180,14 +180,29 @@ const SPECS: CommandSpec[] = [
  * 老后端首帧里没有 baseUrl / apiKeyMasked，那就照实说「后端没告诉我」，
  * 不拿默认值冒充——用户来看这个，往往就是在怀疑配置没生效。
  */
-/** `/denied` 的内容：一条一行，工具 · 参数摘要，下一行缩进写理由。 */
+/** 参数里人认得的那个字段：命令、路径、网址。都没有就是压平的原文。 */
+function argsGist(args: string): string {
+  try {
+    const parsed = JSON.parse(args) as Record<string, unknown>
+    for (const key of ["command", "path", "file_path", "url", "pattern"]) {
+      const value = parsed[key]
+      if (typeof value === "string" && value.trim()) return value
+    }
+  } catch {
+    // 不是 JSON 就用原文
+  }
+  return args
+}
+
+const clip = (text: string, max: number) => (text.length > max ? text.slice(0, max - 1) + "…" : text)
+
+/** `/denied` 的内容：一条一行，工具 · 命令或路径，下一行缩进写理由（都截短，一条不占半屏）。 */
 export function deniedLines(denials: readonly { tool: string; args: string; reason: string; at: number }[]): string[] {
   if (denials.length === 0) return ["这段会话里还没有被自动审查拦下的操作"]
   const lines = [`最近被自动审查拦下的 ${denials.length} 个操作（新的在前）：`]
   for (const d of denials) {
-    const flat = d.args.replace(/\s+/g, " ")
-    lines.push(`  ⛔ ${d.tool}  ${flat.length > 80 ? flat.slice(0, 79) + "…" : flat}`)
-    lines.push(`     ${d.reason || "（没给理由）"}`)
+    lines.push(`  ⛔ ${d.tool}  ${clip(argsGist(d.args).replace(/\s+/g, " "), 90)}`)
+    lines.push(`     ${clip(d.reason || "（没给理由）", 160)}`)
   }
   lines.push("要它做这件事，就在下一句话里明说——审查看的是你的原话")
   return lines

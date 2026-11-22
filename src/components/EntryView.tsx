@@ -23,6 +23,7 @@ import { diffBudgetFor } from "../approval.ts"
 import { highlightCode, parseFence, type CodeLine } from "../code-highlight.ts"
 import { DiffView } from "./DiffView.tsx"
 import { summarizeTools } from "../format.ts"
+import { truncateEnd, width } from "../path.ts"
 import { isListItem, splitBlocks } from "../markdown-blocks.ts"
 import type { MemoryRow } from "../protocol.ts"
 import type { Entry, ToolCall } from "../store.ts"
@@ -413,6 +414,17 @@ function ToolsEntry(props: {
   // 被自动审查拦下的单独数：它不是「出错了」，是「不让做」，要看的东西不一样
   const failed = () => props.calls.filter((call) => call.ok === false && !call.denied).length
   const denied = () => props.calls.filter((call) => call.denied).length
+  const failedText = () => (failed() > 0 ? ` · ${failed()} 个失败` : "")
+  const deniedText = () => (denied() > 0 ? ` · ${denied()} 个被自动审查拦下` : "")
+  /**
+   * 摘要让位：整行放不下时截断摘要文字，计数完整留在同一行。
+   * 不截的话行会折，折点落在计数中间（真终端里试出来的：「1 个失败· 1」下一行「个被自动审查拦下」）
+   */
+  const summaryText = () => {
+    const full = "▸ " + summarizeTools(props.calls) + (running() ? "…" : "")
+    const room = Math.max(8, props.columns - width(failedText()) - width(deniedText()) - 1)
+    return truncateEnd(full, room)
+  }
   /** 这一组里改过文件的那几次。顺序保持调用顺序，读起来和发生顺序一致 */
   const changes = () => props.calls.filter((call) => call.diff && call.diff.length > 0)
 
@@ -424,16 +436,12 @@ function ToolsEntry(props: {
           <>
             {/* 摘要行可点：▸ 点开换成整块明细 */}
             <box flexDirection="row" onMouseDown={() => props.onToggle?.()}>
-              <text fg={theme.subtle}>
-                {"▸ "}
-                {summarizeTools(props.calls)}
-                {running() ? "…" : ""}
-              </text>
+              <text fg={theme.subtle}>{summaryText()}</text>
               <Show when={failed() > 0}>
-                <text fg={theme.error}> · {failed()} 个失败</text>
+                <text fg={theme.error}>{failedText()}</text>
               </Show>
               <Show when={denied() > 0}>
-                <text fg={theme.warning}> · {denied()} 个被自动审查拦下</text>
+                <text fg={theme.warning}>{deniedText()}</text>
               </Show>
             </box>
             {/* 文件多了每个就少露几行，免得七八块 diff 把上面的对话顶出屏幕 */}

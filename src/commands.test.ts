@@ -329,4 +329,20 @@ describe("/denied", () => {
     expect(lines.join("\n")).toContain("外传数据")
     expect(deniedLines([]).join("\n")).toContain("没有")
   })
+
+  test("参数是 JSON 时挑人认得的那个字段（command / path / file_path / url），不摊原始 JSON", () => {
+    const text = deniedLines([
+      { tool: "bash", args: '{"command": "pip install -r requirements.txt"}', reason: "r", at: 0 },
+      { tool: "write_file", args: '{"path": ".myagent/agents/x.md", "content": "..."}', reason: "r", at: 0 },
+    ]).join("\n")
+    expect(text).toContain("bash  pip install -r requirements.txt")
+    expect(text).not.toContain('{"command"')
+    expect(text).toContain("write_file  .myagent/agents/x.md")
+  })
+
+  test("理由太长就截断——一条占满半屏，列表就看不了了", () => {
+    const text = deniedLines([{ tool: "bash", args: "{}", reason: "很长".repeat(200), at: 0 }]).join("\n")
+    expect(text.length).toBeLessThan(400)
+    expect(text).toContain("…")
+  })
 })

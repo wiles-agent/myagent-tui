@@ -1,3 +1,4 @@
+import { Show } from "solid-js"
 import { useTheme } from "../theme.ts"
 import type { Mode } from "../store.ts"
 
@@ -25,7 +26,7 @@ const MODES: Record<Mode, Descriptor> = {
   auto: { label: "auto", hint: "要问你的操作交给自动审查，不弹框", marker: "⏵⏵" },
 }
 
-export function ModeLine(props: { mode: Mode; columns: number }) {
+export function ModeLine(props: { mode: Mode; columns: number; denials?: number }) {
   const theme = useTheme()
 
   const color = () => {
@@ -50,6 +51,10 @@ export function ModeLine(props: { mode: Mode; columns: number }) {
       <text fg={theme.inactive}>  {descriptor().hint}</text>
       {/* 键位提示一直挂着。用户是在**打字的时候**想起「这句话该走规划」的，
           那一刻他不会去翻 /help——提示得就在眼皮底下 */}
+      {/* 拦了却不吭声，人就不知道它干不了什么、为什么绕远路（照 Claude Code 拦下时的提示） */}
+      <Show when={props.mode === "auto" && (props.denials ?? 0) > 0}>
+        <text fg={theme.warning}>{`  ·  已拦 ${props.denials} 次 /denied 看`}</text>
+      </Show>
       <text fg={theme.inactive}>  ·  shift+tab 切换</text>
     </box>
   )

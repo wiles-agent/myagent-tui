@@ -30,6 +30,29 @@ export type ToolCall = {
   output?: string
   /** 改了什么（统一 diff）。只有写文件这类工具才有，见 protocol.ts 的 tool_finished */
   diff?: string
+  /** 被 auto 模式的自动审查拦下了（不是工具自己失败）。见 {@link autoDenialReason} */
+  denied?: boolean
+}
+
+/** 一次被自动审查拦下的操作（照 Claude Code 的「最近被拦」）。 */
+export type Denial = { tool: string; args: string; reason: string; at: number }
+
+/** 「最近被拦」留几条。 */
+export const MAX_DENIALS = 20
+
+const AUTO_DENIAL_PREFIX = '自动审查拦下了这个动作：'
+
+/**
+ * 工具结果是不是自动审查拦下的；是就返回理由（第一行），不是返回 null。
+ *
+ * <p>协议里没有单独的字段，只能认后端的拒绝文案（`AutoClassifier` 里那一句）。只认失败的结果——
+ * 读到的文件里碰巧有这几个字不算。
+ */
+export function autoDenialReason(ok: boolean, output: string | undefined): string | null {
+  if (ok || !output) return null
+  const at = output.indexOf(AUTO_DENIAL_PREFIX)
+  if (at < 0) return null
+  return output.slice(at + AUTO_DENIAL_PREFIX.length).split('\n')[0].trim()
 }
 
 export type Entry =
@@ -229,6 +252,8 @@ export type SessionState = {
    * 会话眼下的模式。**跨轮保持**，由后端说了算（见 {@link Mode}）。
    */
   mode: Mode
+  /** 最近被自动审查拦下的操作，新的在前，最多 {@link MAX_DENIALS} 条。`/denied` 列出来，模式行上挂计数 */
+  denials: Denial[]
   tokens: number
   /** 累计真正发出去的提示词。只增不减，压缩不会让它变小。 */
   sentTokens: number
@@ -287,6 +312,7 @@ const EMPTY_STATE: SessionState = {
   approvalStage: ASK_STAGE,
   planConfirm: null,
   mode: 'normal',
+  denials: [],
   tokens: 0,
   sentTokens: 0,
   contextLimit: 0,
@@ -695,14 +721,21 @@ export class SessionStore {
       case 'tool_finished': {
         const tail = this.tail()
         if (tail?.kind !== 'tools') return
+        const reason = autoDenialReason(event.ok, event.output)
+        const started = tail.calls.find(call => call.id === event.id)
         this.replaceTail({
           ...tail,
           calls: tail.calls.map(call =>
             call.id === event.id
-              ? { ...call, running: false, ok: event.ok, output: event.output, diff: event.diff }
+              ? { ...call, running: false, ok: event.ok, output: event.output, diff: event.diff,
+                  ...(reason !== null ? { denied: true } : {}) }
               : call,
           ),
         })
+        if (reason !== null) {
+          const denial: Denial = { tool: event.tool, args: started?.args ?? '', reason, at: Date.now() }
+          this.set({ denials: [denial, ...this.state.denials].slice(0, MAX_DENIALS) })
+        }
         return
       }
 

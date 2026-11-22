@@ -36,6 +36,7 @@ import {
   filterCommands,
   helpLines,
   statusLines,
+  deniedLines,
   matchCommand,
   resolve,
   type CommandContext,
@@ -360,6 +361,9 @@ export function App(props: AppProps) {
         session.notice("info", statusLines(ready).join("\n"))
         return
       }
+      case "denied":
+        session.notice("info", deniedLines(state().denials).join("\n"))
+        return
       case "continue":
         session.continueSession()
         return
@@ -975,7 +979,7 @@ export function App(props: AppProps) {
         {/* 模式行贴在状态栏下面，和模型名同一列起头。
             在最下面而不是输入框上面：它描述的是「下一句话怎么跑」，
             眼睛从输入框往下扫的第一站就该是它 */}
-        <ModeLine mode={state().mode} columns={dimensions().width} />
+        <ModeLine mode={state().mode} columns={dimensions().width} denials={state().denials.length} />
       </box>
     </ThemeProvider>
   )

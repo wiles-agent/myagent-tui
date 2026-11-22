@@ -9,9 +9,9 @@ import { testRender } from "@opentui/solid"
 import { ModeLine } from "./ModeLine.tsx"
 import type { Mode } from "../store.ts"
 
-async function frameOf(mode: Mode, columns = 80): Promise<string> {
+async function frameOf(mode: Mode, columns = 80, denials = 0): Promise<string> {
   const { renderOnce, captureCharFrame } = await testRender(
-    () => <ModeLine mode={mode} columns={columns} />,
+    () => <ModeLine mode={mode} columns={columns} denials={denials} />,
     { width: columns, height: 3 },
   )
   await renderOnce()
@@ -47,5 +47,12 @@ describe("模式行", () => {
     for (const mode of ["normal", "plan", "auto"] as const) {
       expect(await frameOf(mode)).toContain("shift+tab")
     }
+  })
+
+  test("auto 下拦过东西就挂一个计数，告诉人去哪看——拦了却不吭声，人就不知道它干不了什么", async () => {
+    const frame = await frameOf("auto", 100, 3)
+    expect(frame).toContain("已拦 3")
+    expect(frame).toContain("/denied")
+    expect(await frameOf("auto", 100, 0)).not.toContain("已拦")
   })
 })

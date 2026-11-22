@@ -45,6 +45,7 @@ export type CommandId =
   | "qr"
   | "status"
   | "scroll-speed"
+  | "denied"
 
 type CommandSpec = {
   id: CommandId
@@ -158,6 +159,13 @@ const SPECS: CommandSpec[] = [
     anyFeature: [],
   },
   {
+    id: "denied",
+    name: "/denied",
+    // 纯本地：从事件流里攒的。照 Claude Code 的「最近被拦」（/permissions 里那一栏）
+    description: "看 auto 模式下最近被自动审查拦下的操作和理由",
+    anyFeature: ["permission_auto"],
+  },
+  {
     id: "scroll-speed",
     name: "/scroll-speed",
     // 纯本地，照 Claude Code 的同名命令
@@ -172,6 +180,19 @@ const SPECS: CommandSpec[] = [
  * 老后端首帧里没有 baseUrl / apiKeyMasked，那就照实说「后端没告诉我」，
  * 不拿默认值冒充——用户来看这个，往往就是在怀疑配置没生效。
  */
+/** `/denied` 的内容：一条一行，工具 · 参数摘要，下一行缩进写理由。 */
+export function deniedLines(denials: readonly { tool: string; args: string; reason: string; at: number }[]): string[] {
+  if (denials.length === 0) return ["这段会话里还没有被自动审查拦下的操作"]
+  const lines = [`最近被自动审查拦下的 ${denials.length} 个操作（新的在前）：`]
+  for (const d of denials) {
+    const flat = d.args.replace(/\s+/g, " ")
+    lines.push(`  ⛔ ${d.tool}  ${flat.length > 80 ? flat.slice(0, 79) + "…" : flat}`)
+    lines.push(`     ${d.reason || "（没给理由）"}`)
+  }
+  lines.push("要它做这件事，就在下一句话里明说——审查看的是你的原话")
+  return lines
+}
+
 export function statusLines(ready: {
   model: string
   hasApiKey: boolean

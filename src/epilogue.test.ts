@@ -26,6 +26,7 @@ function stateOf(partial: {
     entries: partial.entries ?? [],
     approvalStage: { step: 'ask' as const, index: 0 },
     mode: 'normal' as const,
+    denials: [],
     expanded: new Set(),
     busy: false,
     step: 0,

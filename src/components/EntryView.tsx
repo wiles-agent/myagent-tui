@@ -410,7 +410,9 @@ function ToolsEntry(props: {
 }) {
   const theme = useTheme()
   const running = () => props.calls.some((call) => call.running)
-  const failed = () => props.calls.filter((call) => call.ok === false).length
+  // 被自动审查拦下的单独数：它不是「出错了」，是「不让做」，要看的东西不一样
+  const failed = () => props.calls.filter((call) => call.ok === false && !call.denied).length
+  const denied = () => props.calls.filter((call) => call.denied).length
   /** 这一组里改过文件的那几次。顺序保持调用顺序，读起来和发生顺序一致 */
   const changes = () => props.calls.filter((call) => call.diff && call.diff.length > 0)
 
@@ -429,6 +431,9 @@ function ToolsEntry(props: {
               </text>
               <Show when={failed() > 0}>
                 <text fg={theme.error}> · {failed()} 个失败</text>
+              </Show>
+              <Show when={denied() > 0}>
+                <text fg={theme.warning}> · {denied()} 个被自动审查拦下</text>
               </Show>
             </box>
             {/* 文件多了每个就少露几行，免得七八块 diff 把上面的对话顶出屏幕 */}
@@ -482,9 +487,9 @@ function ToolsEntry(props: {
 function ToolDetail(props: { call: ToolCall; columns: number }) {
   const theme = useTheme()
   const mark = () =>
-    props.call.running ? "●" : props.call.ok === false ? "✗" : "✓"
+    props.call.running ? "●" : props.call.denied ? "⛔" : props.call.ok === false ? "✗" : "✓"
   const markColor = () =>
-    props.call.running ? theme.warning : props.call.ok === false ? theme.error : theme.success
+    props.call.running || props.call.denied ? theme.warning : props.call.ok === false ? theme.error : theme.success
   const argsLine = () => {
     const flat = props.call.args.replace(/\s+/g, " ")
     const room = Math.max(8, props.columns - props.call.tool.length - 4)

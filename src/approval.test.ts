@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import {
+  kindLabel,
   askChoices,
   diffBudgetFor,
   diffLineKind,
@@ -120,5 +121,19 @@ describe("一组里多个 diff 分预算", () => {
     for (let i = 1; i < budgets.length; i++) {
       expect(budgets[i]!).toBeLessThanOrEqual(budgets[i - 1]!)
     }
+  })
+})
+
+describe("kindLabel", () => {
+  test("机器键换成人话：要授权的是哪一类事，用户一眼要看得出", () => {
+    expect(kindLabel("bash")).toBe("命令")
+    expect(kindLabel("write")).toBe("写文件")
+    expect(kindLabel("read")).toBe("读文件")
+    expect(kindLabel("network")).toBe("联网")
+    expect(kindLabel("browse")).toBe("浏览器")
+  })
+
+  test("不认识的新类型原样显示（新 kind 不升协议版本，老界面照画）", () => {
+    expect(kindLabel("mcp")).toBe("mcp")
   })
 })

@@ -59,6 +59,22 @@ export function askChoices(hasSuggestions: boolean): AskChoice[] {
   return choices
 }
 
+/**
+ * 审批类型的人话名字。后端的 `kind` 是机器键（协议 3.3），新类型不升协议版本，
+ * 所以不认识的原样显示——总比不显示强。
+ */
+const KIND_LABELS: Record<string, string> = {
+  bash: "命令",
+  write: "写文件",
+  read: "读文件",
+  network: "联网",
+  browse: "浏览器",
+}
+
+export function kindLabel(kind: string): string {
+  return KIND_LABELS[kind] ?? kind
+}
+
 /** 补充说明最多多少字。和后端的 MAX_FEEDBACK 对齐，超了后端也会截。 */
 export const MAX_FEEDBACK = 500
 

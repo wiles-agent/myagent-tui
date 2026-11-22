@@ -24,7 +24,7 @@
 
 import { TextAttributes } from "@opentui/core"
 import { createMemo, For, Show } from "solid-js"
-import { askChoices, type ApprovalStage, type AskChoice } from "../approval.ts"
+import { askChoices, kindLabel, type ApprovalStage, type AskChoice } from "../approval.ts"
 import { DiffView } from "./DiffView.tsx"
 import type { Approval } from "../store.ts"
 import { truncateEnd, width } from "../path.ts"
@@ -85,6 +85,8 @@ export function ApprovalDialog(props: ApprovalDialogProps) {
         <text fg={theme.approvalBorder} attributes={TextAttributes.BOLD}>
           需要确认
         </text>
+        {/* 哪一类事：「联网」「读文件」和「命令」要掂量的东西不一样 */}
+        <text fg={theme.subtle}>{` · ${kindLabel(props.approval.kind)}`}</text>
         {/* 谁在问。计划里七八个任务依次跑过时，没有出处的确认框只会被一路点同意 */}
         <Show when={props.approval.origin.length > 0}>
           <text fg={theme.subtle}>{`   ${truncateEnd(props.approval.origin, Math.max(4, inner() - 10))}`}</text>
@@ -145,7 +147,7 @@ export function ApprovalDialog(props: ApprovalDialogProps) {
               以后都同意:{" "}
             </text>
             <text fg={theme.text}>
-              {truncateEnd(`${props.approval.kind}  ${level()!.label}`, Math.max(8, inner() - 12))}
+              {truncateEnd(`${kindLabel(props.approval.kind)}  ${level()!.label}`, Math.max(8, inner() - 12))}
             </text>
           </box>
           <text fg={theme.subtle}>

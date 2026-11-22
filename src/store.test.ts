@@ -997,6 +997,43 @@ describe('模式切换', () => {
   })
 })
 
+describe('auto 模式（feature: permission_auto）', () => {
+  const withFeatures = (features: string[]) => {
+    const store = new SessionStore()
+    feed(store, {
+      t: 'ready', protocol: 1, version: '0.2.0', workspace: '/tmp/x', model: 'm',
+      planMode: false, hasApiKey: true, busy: false, features, tools: [],
+    } as ServerEvent)
+    return store
+  }
+
+  test('后端宣告了才进得去；顺序 normal → plan → auto → normal，auto 排最后——按惯了的 normal ↔ plan 不被打乱', () => {
+    const store = withFeatures(['plan_mode', 'permission_auto'])
+    expect(store.cycleMode()).toBe('plan')
+    expect(store.cycleMode()).toBe('auto')
+    expect(store.getSnapshot().mode).toBe('auto')
+    expect(store.cycleMode()).toBe('normal')
+  })
+
+  test('只有 permission_auto 没有 plan_mode：normal ↔ auto', () => {
+    const store = withFeatures(['permission_auto'])
+    expect(store.cycleMode()).toBe('auto')
+    expect(store.cycleMode()).toBe('normal')
+  })
+
+  test('老后端没宣告：一圈里没有 auto', () => {
+    expect(nextMode('plan', ['plan_mode'])).toBe('normal')
+    expect(modeIsAvailable('auto', ['plan_mode'])).toBe(false)
+    expect(modeIsAvailable('auto', ['auto_mode']) ).toBe(false)   // 早就撤掉的「自动转规划」，不是这个
+  })
+
+  test('mode 事件带 auto（别的界面切的）就跟着变', () => {
+    const store = withFeatures(['plan_mode', 'permission_auto'])
+    feed(store, { t: 'mode', mode: 'auto' })
+    expect(store.getSnapshot().mode).toBe('auto')
+  })
+})
+
 describe('模式可用性（纯函数）', () => {
   test('normal 永远可用，不挑后端', () => {
     expect(modeIsAvailable('normal', [])).toBe(true)

@@ -103,10 +103,13 @@ export type Approval = {
  * 所以界面只是跟着 `mode` 事件走，Shift+Tab 发 `set_mode` 请后端切。
  * 模式是**看得见的状态**（左下角常驻一行），用户不必记住「我刚才有没有切过去」。
  */
-export type Mode = 'normal' | 'plan'
+export type Mode = 'normal' | 'plan' | 'auto'
 
-/** 切换顺序。normal 打头：最常用的排第一，Shift+Tab 一圈回到它。 */
-export const MODE_CYCLE: readonly Mode[] = ['normal', 'plan']
+/**
+ * 切换顺序。normal 打头：最常用的排第一，Shift+Tab 一圈回到它。
+ * auto 排最后：按惯了的 normal ↔ plan 不被打乱，也不会一按就从 normal 滑进「不问人」。
+ */
+export const MODE_CYCLE: readonly Mode[] = ['normal', 'plan', 'auto']
 
 /**
  * 这个模式要后端宣告哪个能力。normal 谁都能跑，所以是 null。
@@ -117,6 +120,8 @@ export const MODE_CYCLE: readonly Mode[] = ['normal', 'plan']
 const MODE_FEATURE: Record<Mode, string | null> = {
   normal: null,
   plan: 'plan_mode',
+  // 不认 auto_mode：那是早就撤掉的「按字面自动转规划」，老后端宣告它不代表能进这个 auto
+  auto: 'permission_auto',
 }
 
 export function modeIsAvailable(mode: Mode, features: readonly string[]): boolean {

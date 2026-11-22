@@ -31,7 +31,7 @@ export type RoleInfo = {
 export type SkillInfo = { id: string; description: string }
 
 /** 会话模式。plan 模式是后端持有的权限模式：只许调研，计划批了才退出（协议见 Protocol.java）。 */
-export type ModeWire = 'normal' | 'plan'
+export type ModeWire = 'normal' | 'plan' | 'auto'
 
 /**
  * 一条长期记忆在列表里的样子。
@@ -263,7 +263,7 @@ export type ServerEvent =
    * `cid` 是发起方的连接 id：自己那条要跳过，因为本地已经即时回显过了。
    * 没有这条的话，另一块屏上会凭空冒出一段回答。
    */
-  | { t: 'user_message'; text: string; mode: 'normal' | 'plan'; cid?: string }
+  | { t: 'user_message'; text: string; mode: ModeWire; cid?: string }
   /**
    * 这个工作区的会话历史，只回给问的那个连接。
    *

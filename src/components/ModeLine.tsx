@@ -22,6 +22,7 @@ type Descriptor = { label: string; hint: string; marker: string }
 const MODES: Record<Mode, Descriptor> = {
   normal: { label: "normal", hint: "直接对话", marker: "·" },
   plan: { label: "plan", hint: "只调研、出计划，批准了才动手", marker: "⏸" },
+  auto: { label: "auto", hint: "要问你的操作交给自动审查，不弹框", marker: "⏵⏵" },
 }
 
 export function ModeLine(props: { mode: Mode; columns: number }) {
@@ -31,6 +32,9 @@ export function ModeLine(props: { mode: Mode; columns: number }) {
     switch (props.mode) {
       case "plan":
         return theme.brand
+      // 「它不会再停下来问我了」是最该一眼看见的状态
+      case "auto":
+        return theme.warning
       default:
         return theme.inactive
     }

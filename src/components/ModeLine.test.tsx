@@ -30,15 +30,21 @@ describe("模式行", () => {
     expect(await frameOf("plan")).toContain("批准了才动手")
   })
 
+  test("auto 写清后果：要问你的操作交给自动审查，不弹框", async () => {
+    const frame = await frameOf("auto")
+    expect(frame).toContain("auto")
+    expect(frame).toContain("自动审查")
+  })
+
   test("只占一行——它贴在状态栏下面，折行会把输入框顶上去", async () => {
-    for (const mode of ["normal", "plan"] as const) {
+    for (const mode of ["normal", "plan", "auto"] as const) {
       const rows = (await frameOf(mode, 60)).split("\n").filter((l) => l.trim())
       expect(rows).toHaveLength(1)
     }
   })
 
   test("切换提示在每个模式下都在，不是只在 normal 下教一次", async () => {
-    for (const mode of ["normal", "plan"] as const) {
+    for (const mode of ["normal", "plan", "auto"] as const) {
       expect(await frameOf(mode)).toContain("shift+tab")
     }
   })
